@@ -9,8 +9,24 @@ function PostsList({isPosting, onStopPosting}) {
   
 
   const [posts, setPosts] = useState([]);
+  const [isFetching, setIsFetching] = useState(false);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    async function fetchPosts(){
+      setIsFetching(true);
+      const response = await fetch('http://localhost:7001/posts');
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts.');
+      }
+      const resData = await response.json();
+      setPosts(resData.posts);
+      setIsFetching(false);
+    }
+
+    fetchPosts().catch((error) => {
+      console.error('Error fetching posts:', error);
+    });
+  }, []);
 
   function addPostHandler(postData) {
     fetch('http://localhost:7001/posts', {
@@ -34,8 +50,8 @@ function PostsList({isPosting, onStopPosting}) {
           onCancel={onStopPosting} onAddPost={addPostHandler}
         />
       </Modal>)}
-      
-      <ul className={classes.posts}>
+
+      {!isFetching && posts.length > 0 && (<ul className={classes.posts}>
         {posts.map((post, index) => (
           <Post
             key={index}
@@ -43,8 +59,12 @@ function PostsList({isPosting, onStopPosting}) {
             body={post.body}
           />
         ))}
-      </ul>
+      </ul>)}
+      
+      
       { posts.length === 0 && <div style={{textAlign: 'center', color: 'white'}}>No posts yet!</div> }
+
+      {isFetching && <div style={{textAlign: 'center', color: 'white'}}>Loading posts...</div>}
     </>
   );
 }
